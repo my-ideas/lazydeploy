@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+
+# USAGE ./lazydeploy ec2 <EC2_INSTANCE_NAME> <S3_BUCKET> <S3_PATH> <CODEDEPLOYROLE> [--exclude ]
+
+NUMBER=$[$RANDOM % 100000]
+APP="LazyApp$NUMBER"
+GROUP="LazyGroup$NUMBER"
+EC2_INSTANCE_NAME=$2
+S3_BUCKET=$3
+S3_PATH=$4
+CODEDEPLOYROLE=$5
+EXCLUDE=$6
+
+
+function ec2 {
+    
+    zip -r app.zip ./ $EXCLUDE
+
+    aws s3 cp app.zip s3://$S3_BUCKET/$S3_PATH$APP
+
+    aws deploy create-application --application-name $APP
+
+    aws deploy create-deployment-group --application-name $APP --ec2-tag-filters Key=Name,Type=KEY_AND_VALUE,Value=$EC2_INSTANCE_NAME --deployment-group-name $GROUP --service-role-arn $(aws iam get-role --role-name $CODEDEPLOYROLE --query "Role.Arn" --output text)
+
+    aws deploy create-deployment --application-name $APP --deployment-config-name CodeDeployDefault.OneAtATime --deployment-group-name $GROUP --s3-location bucket=$S3_BUCKET,bundleType=zip,key=$S3_PATH$APP
+
+    aws deploy list-deployments --application-name $APP --deployment-group-name $GROUP --query "deployments" --output text
+
+    aws deploy get-deployment --deployment-id $(aws deploy list-deployments --application-name $APP --deployment-group-name $GROUP --query "deployments" --output text) --query "deploymentInfo.[status, creator]" --output text
+
+}
+
+echo $1
+case $1 in
+    ec2)
+    ec2
+    ;;
+    echo)
+    echo $1 $2 $3 $4 $5 $6 $7
+esac
