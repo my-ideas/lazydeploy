@@ -6,5 +6,5 @@
 
 Example:
 ```bash
-lazydeploy ec2  beekube-prod-worker-gracious-hoover-503 bk-pipeline-global-artifact001 artifacts/global/dockerkan/ beekube-users-CodeDeployRole-1H7HJYH9IW87E "--exclude=*git* --exclude=.env --exclude=*node_modules* --exclude=*dist*"
+lazydeploy ec2 hakuna-503 pipeline app/ CodeDeployRole "--exclude=*git* --exclude=.env --exclude=*node_modules* --exclude=*dist*"
 ```
