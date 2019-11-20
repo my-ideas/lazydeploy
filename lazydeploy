@@ -1,40 +1,48 @@
 #!/usr/bin/env bash
 
-# USAGE ./lazydeploy ec2 <EC2_INSTANCE_NAME> <S3_BUCKET> <S3_PATH> <CODEDEPLOYROLE> [--exclude ]
+# USAGE ./lazydeploy <EC2_INSTANCE_NAME>
+
+. ./LAZYNESS
 
 NUMBER=$[$RANDOM % 100000]
-APP="LazyApp$NUMBER"
+# APP="LazyApp$NUMBER"
 GROUP="LazyGroup$NUMBER"
-EC2_INSTANCE_NAME=$2
-S3_BUCKET=$3
-S3_PATH=$4
-CODEDEPLOYROLE=$5
-EXCLUDE=$6
+EC2_INSTANCE_NAME=$1
 
 
 function ec2 {
     
-    zip -r app.zip ./ $EXCLUDE
+    zip -r app.zip ./ $LAZY_EXCLUDE
 
-    aws s3 cp app.zip s3://$S3_BUCKET/$S3_PATH$APP
+    aws s3 cp app.zip s3://$LAZY_S3_BUCKET/$LAZY_PATH$LAZY_APP
 
-    aws deploy create-application --application-name $APP
+    aws deploy create-application --application-name $LAZY_APP
 
-    aws deploy create-deployment-group --application-name $APP --ec2-tag-filters Key=Name,Type=KEY_AND_VALUE,Value=$EC2_INSTANCE_NAME --deployment-group-name $GROUP --service-role-arn $(aws iam get-role --role-name $CODEDEPLOYROLE --query "Role.Arn" --output text)
+    aws deploy create-deployment-group --application-name $LAZY_APP --ec2-tag-filters Key=Name,Type=KEY_AND_VALUE,Value=$EC2_INSTANCE_NAME --deployment-group-name $GROUP --service-role-arn $(aws iam get-role --role-name $LAZY_CODEDEPLOYROLE --query "Role.Arn" --output text)
 
-    aws deploy create-deployment --application-name $APP --deployment-config-name CodeDeployDefault.OneAtATime --deployment-group-name $GROUP --s3-location bucket=$S3_BUCKET,bundleType=zip,key=$S3_PATH$APP
+    aws deploy create-deployment --application-name $LAZY_APP --deployment-config-name CodeDeployDefault.OneAtATime --deployment-group-name $GROUP --s3-location bucket=$LAZY_S3_BUCKET,bundleType=zip,key=$LAZY_PATH$LAZY_APP --file-exists-behavior OVERWRITE
 
-    aws deploy list-deployments --application-name $APP --deployment-group-name $GROUP --query "deployments" --output text
+    aws deploy list-deployments --application-name $LAZY_APP --deployment-group-name $GROUP --query "deployments" --output text
 
-    aws deploy get-deployment --deployment-id $(aws deploy list-deployments --application-name $APP --deployment-group-name $GROUP --query "deployments" --output text) --query "deploymentInfo.[status, creator]" --output text
+
+    aws deploy get-deployment --deployment-id $(aws deploy list-deployments --application-name $LAZY_APP --deployment-group-name $GROUP --query "deployments" --output text) --query "deploymentInfo.[status, creator]" --output text
+
+    echo "Waiting for deployment...";
+    
+    aws deploy wait deployment-successful --deployment-id $(aws deploy list-deployments --application-name $LAZY_APP --deployment-group-name $GROUP --query "deployments" --output text) --query "deploymentInfo.[status, creator]"
+    
+    aws deploy delete-deployment-group --application-name $LAZY_APP --deployment-group-name $GROUP
+
+    # aws deploy delete-application --application-name $LAZY_APP
 
 }
 
-echo $1
-case $1 in
-    ec2)
-    ec2
-    ;;
-    echo)
-    echo $1 $2 $3 $4 $5 $6 $7
-esac
+function test { 
+    echo $LAZY_APP
+    echo $GROUP
+    echo $BUCKET
+
+}
+
+
+ec2

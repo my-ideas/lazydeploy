@@ -1,10 +1,12 @@
 # USAGE 
 
+Make sure in your path exist a file like LAZYNESS.example. Then:
+
 ```bash
-./lazydeploy ec2 <EC2_INSTANCE_NAME> <S3_BUCKET> <S3_PATH> <CODEDEPLOYROLE> [--exclude ]
+./lazydeploy <EC2_INSTANCE_NAME> 
 ```
 
 Example:
 ```bash
-lazydeploy ec2 hakuna-503 pipeline app/ CodeDeployRole "--exclude=*git* --exclude=.env --exclude=*node_modules* --exclude=*dist*"
+lazydeploy ec2 hakuna-503
 ```
