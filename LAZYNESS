@@ -1,0 +1,5 @@
+LAZY_S3_BUCKET="artifact001"
+LAZY_PATH="artifacts/"
+LAZY_CODEDEPLOYROLE="CodeDeployRole-123456789"
+LAZY_EXCLUDE="--exclude=.env --exclude=*node_modules* --exclude=*dist*"
+LAZY_APP="appname"
